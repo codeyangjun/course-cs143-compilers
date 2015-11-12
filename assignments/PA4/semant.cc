@@ -88,6 +88,8 @@ SymbolTable<char*, Entry>* symbolTable;
 Class_ curClass;
 
 ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) {
+    /* Fill this in */
+    this->classes = classes->copy_list();
 }
 
 void ClassTable::install_basic_classes() {
@@ -123,6 +125,7 @@ void ClassTable::install_basic_classes() {
 					       single_Features(method(type_name, nil_Formals(), Str, no_expr()))),
 			       single_Features(method(copy, nil_Formals(), SELF_TYPE, no_expr()))),
 	       filename);
+    cTable->addid(Object->get_string(), Object_class);
 
     // 
     // The IO class inherits from Object. Its methods are
@@ -143,7 +146,8 @@ void ClassTable::install_basic_classes() {
 										      SELF_TYPE, no_expr()))),
 					       single_Features(method(in_string, nil_Formals(), Str, no_expr()))),
 			       single_Features(method(in_int, nil_Formals(), Int, no_expr()))),
-	       filename);  
+	       filename);
+    cTable->addid(IO->get_string(), IO_class);
 
     //
     // The Int class has no methods and only a single attribute, the
@@ -154,12 +158,14 @@ void ClassTable::install_basic_classes() {
 	       Object,
 	       single_Features(attr(val, prim_slot, no_expr())),
 	       filename);
+    cTable->addid(Int->get_string(), Int_class);
 
     //
     // Bool also has only the "val" slot.
     //
     Class_ Bool_class =
 	class_(Bool, Object, single_Features(attr(val, prim_slot, no_expr())),filename);
+    cTable->addid(Bool->get_string(), Bool_class);
 
     //
     // The class Str has a number of slots and operations:
@@ -189,6 +195,7 @@ void ClassTable::install_basic_classes() {
 						      Str, 
 						      no_expr()))),
 	       filename);
+    cTable->addid(Str->get_string(), Str_class);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -276,6 +283,8 @@ private:
 public:
     void addEdge(const Symbol&, const Symbol&); // a inherits b
     int validate();
+    int conform(const Symbol&, const Symbol&); // a conforms to b
+    Symbol lca(Symbol, Symbol); // lca of a and b
 }* g;
 
 void InheritanceGraph::addEdge(const Symbol& a, const Symbol& b)
@@ -305,6 +314,65 @@ int InheritanceGraph::validate()
     return 0;
 }
 
+int InheritanceGraph::conform(const Symbol& a, const Symbol& b)
+{
+    if (a == b)
+        return 1;
+    Symbol cur = a;
+    if (cur == SELF_TYPE)
+        cur = curClass->get_name();
+    while (cur != Object) {
+        if (cur == b) {
+            return 1;
+        }
+        cur = graph[cur];
+    }
+    return cur == b;
+}
+
+Symbol InheritanceGraph::lca(Symbol a, Symbol b)
+{
+    if (a == b)
+        return a;
+
+    if (a == SELF_TYPE)
+        a = curClass->get_name();
+
+    if (b == SELF_TYPE)
+        b = curClass->get_name();
+
+    int ha = 0, hb = 0;
+    Symbol cura = a, curb = b;
+
+    while (cura != Object) {
+        cura = graph[cura];
+        ha++;
+    }
+    while (curb != Object) {
+        curb = graph[curb];
+        hb++;
+    }
+
+    cura = a;
+    curb = b;
+    if (ha >= hb) {
+        for (int i = ha - hb; i > 0; i--) {
+            cura = graph[cura];
+        }
+    }
+    else {
+        for (int i = hb - ha; i > 0; i--) {
+            curb = graph[curb];
+        }
+    }
+
+    while (cura != curb) {
+        cura = graph[cura];
+        curb = graph[curb];
+    }
+    return cura;
+}
+
 /*
  * Program Class
  */
@@ -318,7 +386,7 @@ void program_class::preprocess()
     g->addEdge(Str, Object);
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         curClass = classes->nth(i);
-        g->addEdge(curClass->getName(), curClass->getParent());
+        g->addEdge(curClass->get_name(), curClass->get_parent());
     }
     if (g->validate()) {
         throw "Inheritance Violation";
@@ -328,7 +396,7 @@ void program_class::preprocess()
     bool findMainClass = false;
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         curClass = classes->nth(i);
-        char* className = curClass->getName()->get_string();
+        char* className = curClass->get_name()->get_string();
 
         if (strcmp(className, "Main") == 0) {
             findMainClass = true;
@@ -358,17 +426,183 @@ void program_class::preprocess()
     }
 }
 
-
+void program_class::analyze()
+{
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
+        curClass = classes->nth(i);
+        if (ctable->lookup(cur_class->get_parent()->get_string()) == NULL) {
+            throw "Inheritance from an undefined class.";
+        }
+        symbolTable->enterscope();
+        curClass->analyze();
+        symbolTable->exitscope();
+    }
+}
 
 /*
  * Class Class
  */
-Symbol class__class::getName()
+Symbol class__class::get_name()
 {
     return name;
 }
 
-Symbol class__class::getParent()
+Symbol class__class::get_parent()
 {
     return parent;
 }
+
+Feature class__class::get_method(char* feature_name)
+{
+    for (int i = features->first(); features->more(i); i = features->next(i)) {
+        Feature f = features->nth(i);
+        if (f->get_formals() != NULL && strcmp(f->get_name()->get_string(), feature_name) == 0) {
+            return f;
+        }
+    }
+    return NULL;
+}
+
+Feature class__class::get_attr(char* feature_name)
+{
+    for (int i = features->first(); features->more(i); i = features->next(i)) {
+        Feature f = features->nth(i);
+        if (f->get_formals() == NULL && strcmp(f->get_name()->get_string(), feature_name) == 0) {
+            return f;
+        }
+    }
+    return NULL;
+}
+
+void class__class::analyze()
+{
+    for (int i = features->first(); features->more(i); i = features->next(i)) {
+        Feature feature = features->nth(i);
+        feature->analyze();
+    }
+}
+
+/*
+ * Method Class
+ */
+Symbol method_class::get_name()
+{
+    return name;
+}
+
+Formals method_class::get_formals()
+{
+    return formals;
+}
+
+Symbol method_class::get_type()
+{
+    return return_type;
+}
+
+void method_class::analyze()
+{
+    symbolTable->enterscope();
+
+    if (cTable->lookup(return_type->get_string()) == NULL && return_type != SELF_TYPE) {
+        throw "Undefined return type";
+    }
+
+    // find method from ancestors
+    Feature feature = null;
+    Class_ targetClass = cTable->lookup(curClass->get_parent()->get_string());
+    while (true) {
+        feature = targetClass->get_method(name->get_string());
+        if (feature != NULL) {
+            break;
+        }
+        if (targetClass->get_parent() == No_class) {
+            break;
+        }
+        targetClass = cTable->lookup(targetClass->get_parent()->get_string());
+    }
+    // check overriding
+    if (feature != NULL) {
+        Formals parentFormals = feature->get_formals();
+        if (parentFormals->len() != formals->len()) {
+            throw "Invalid overriding!";
+        }
+        for (int i = formals->first(); formals->more(i); i = formals->next(i)) {
+            Formal formal = formals->nth(i);
+            formal->analyze();
+            Formal parentFormal = parentFormals->nth(i);
+            if (formal->get_type() != parentFormal->get_type()) {
+                throw "Invalid overriding!";
+            }
+        }
+        if (feature->get_type() != return_type) {
+            throw "Invalid overriding!";
+        }
+    } else {
+        for (int i = formals->first(); formals->more(i); i = formals->next(i)) {
+            Formal formal = formals->nth(i);
+            formal->analyze();
+        }
+    }
+
+    expr->analyze();
+
+    if (!g->conform(expr->get_type(), return_type)) {
+        throw "expr type cannot conform to return type.";
+    }
+
+    symbolTable->exitscope();
+}
+
+/*
+ * Attr Class
+ */
+Symbol attr_class::get_name()
+{
+    return name;
+}
+
+Symbol attr_class::get_formals()
+{
+    return NULL;
+}
+
+Symbol attr_class::get_type()
+{
+    return type_decl;
+}
+
+void attr_class::analyze()
+{
+    if (type_decl == SELF_TYPE) {
+        type_decl = curClass->get_name();
+    }
+
+    if (strcmp(name->get_string(), "self") == 0) {
+        throw "\'self\' cannot be the name of an attribute.";
+    }
+
+    // find attrs from ancestors
+    Feature feature = null;
+    Class_ targetClass = cTable->lookup(curClass->get_parent()->get_string());
+    while (true) {
+        feature = targetClass->get_attr(name->get_string());
+        if (feature != NULL) {
+            throw "Cannot override parent's attribute";
+            break;
+        }
+        if (targetClass->get_parent() == No_class) {
+            break;
+        }
+        targetClass = cTable->lookup(targetClass->get_parent()->get_string());
+    }
+
+    init->analyze();
+
+    Symbol init_type = init->get_type();
+    if (init_type != No_type && g->conform(init_type, type_decl) == false) {
+        throw "type error in attr_class";
+    }
+    symboltable->addid(name->get_string(), type_decl);
+}
+

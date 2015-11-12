@@ -36,9 +36,11 @@ class Class__class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Class_(); }
         virtual Class_ copy_Class_() = 0;
-        virtual Symbol getName() = 0;
-        virtual Symbol getParent() = 0;
-
+        virtual Symbol get_name() = 0;
+        virtual Symbol get_parent() = 0;
+        virtual Feature get_method(char*) = 0;
+        virtual Feature get_attr(char*) = 0;
+        virtual void analyze() = 0;
 #ifdef Class__EXTRAS
         Class__EXTRAS
 #endif
@@ -52,6 +54,10 @@ class Feature_class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Feature(); }
         virtual Feature copy_Feature() = 0;
+        virtual Symbol get_name() = 0;
+        virtual Formals get_formals() = 0;
+        virtual Symbol get_type() = 0;
+        virtual void analyze() = 0;
 #ifdef Feature_EXTRAS
         Feature_EXTRAS
 #endif
@@ -65,7 +71,8 @@ class Formal_class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Formal(); }
         virtual Formal copy_Formal() = 0;
-
+        virtual Symbol get_type() = 0;
+        virtual void analyze() = 0;
 #ifdef Formal_EXTRAS
         Formal_EXTRAS
 #endif
@@ -79,7 +86,7 @@ class Expression_class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Expression(); }
         virtual Expression copy_Expression() = 0;
-
+        virtual void analyze() = 0;
 #ifdef Expression_EXTRAS
         Expression_EXTRAS
 #endif
