@@ -249,7 +249,7 @@ void program_class::semant()
     cTable = new SymbolTable<char*, Class__class>();
     cTable->enterscope();
 
-    classtable->install_basic_classes();
+    classTable->install_basic_classes();
 
     symbolTable = new SymbolTable<char*, Entry>();
 
@@ -260,20 +260,65 @@ void program_class::semant()
         classTable->semant_error(curClass) << msg << endl;
     }
 
-    if (classtable->errors()) {
+    if (classTable->errors()) {
 	    cerr << "Compilation halted due to static semantic errors." << endl;
 	    exit(1);
     }
 }
 
-/* The implementation details for classes methods
+/*
+ * Program Class
 */
 void program_class::preprocess() 
 {
     // check inheritance
     
+
+    // scan classes
+    bool findMainClass = false;
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         curClass = classes->nth(i);
+        char* className = curClass->getName()->get_string();
 
+        if (strcmp(className, "Main") == 0) {
+            findMainClass = true;
+        }
+
+        if (strcmp(class_name, "SELF_TYPE") == 0) {
+            throw "SELF_TYPE redeclared(used a class name).";
+        }
+
+        if (cTable->lookup(className) != null) {
+            throw "Invalid redefinition.";
+        }
+
+        if (strcmp(class_name, "Object") == 0 || strcmp(class_name, "Bool") == 0 || strcmp(class_name, "Int") == 0 || strcmp(class_name, "String") == 0 || strcmp(class_name, "IO") == 0) {
+            throw "Invalid redefinition.";
+        }
+
+        char *parentClassName = curClass->getParent()->get_string();
+        if (strcmp(parent_class_name, "Bool") == 0 || strcmp(parent_class_name, "Int") == 0 || strcmp(parent_class_name, "String") == 0 || strcmp(parent_class_name, "SELF_TYPE") == 0) {
+            throw "Invalid inheritance.";
+        }
+
+        cTable->addid(className, curClass);
     }
+    if (!findMainClass) {
+        classTable->semant_error() << "Main Class is not defined." << endl;
+    }
+}
+
+
+
+/*
+ * Class Class
+ */
+Symbol class__class::getName()
+{
+    return name;
+}
+
+Symbol class__class::getParent()
+{
+    return parent;
 }

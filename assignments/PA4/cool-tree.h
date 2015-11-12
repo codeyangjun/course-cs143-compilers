@@ -36,8 +36,9 @@ class Class__class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Class_(); }
         virtual Class_ copy_Class_() = 0;
-        virtual void analyze() = 0;
-        virtual void 
+        virtual Symbol getName() = 0;
+        virtual Symbol getParent() = 0;
+
 #ifdef Class__EXTRAS
         Class__EXTRAS
 #endif
@@ -51,7 +52,6 @@ class Feature_class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Feature(); }
         virtual Feature copy_Feature() = 0;
-        virtual analyze();
 #ifdef Feature_EXTRAS
         Feature_EXTRAS
 #endif
