@@ -267,12 +267,62 @@ void program_class::semant()
 }
 
 /*
+ * Inheritance Graph Class
+ */
+class InheritanceGraph
+{
+private:
+    std::map<Symbol, Symbol> graph;
+public:
+    void addEdge(const Symbol&, const Symbol&); // a inherits b
+    int validate();
+}* g;
+
+void InheritanceGraph::addEdge(const Symbol& a, const Symbol& b)
+{
+    if (graph.find(a) != graph.end()) {
+        return;
+    }
+    graph[a] = b;
+}
+
+int InheritanceGraph::validate()
+{
+    for (std::map<Symbol, Symbol>::iterator it = graph.begin(); it != graph.end(); it++) {
+        Symbol cur = it->first;
+        Symbol next = it->second;
+        std::set<Symbol> visited;
+        visited.insert(cur);
+        while (next != Object) {
+            if (visited.find(next) != visited.end()) {
+                return 1;
+            }
+            visited.insert(next);
+            cur = next;
+            next = graph[next];
+        }
+    }
+    return 0;
+}
+
+/*
  * Program Class
-*/
+ */
 void program_class::preprocess() 
 {
     // check inheritance
-    
+    g = new InheritanceGraph();
+    g->addEdge(IO, Object);
+    g->addEdge(Int, Object);
+    g->addEdge(Bool, Object);
+    g->addEdge(Str, Object);
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
+        curClass = classes->nth(i);
+        g->addEdge(curClass->getName(), curClass->getParent());
+    }
+    if (g->validate()) {
+        throw "Inheritance Violation";
+    }
 
     // scan classes
     bool findMainClass = false;
