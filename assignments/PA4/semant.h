@@ -22,11 +22,12 @@ typedef ClassTable *ClassTableP;
 class ClassTable {
 private:
   int semant_errors;
-  void install_basic_classes();
   ostream& error_stream;
+  Classes classes;
 
 public:
   ClassTable(Classes);
+  void install_basic_classes();
   int errors() { return semant_errors; }
   ostream& semant_error();
   ostream& semant_error(Class_ c);

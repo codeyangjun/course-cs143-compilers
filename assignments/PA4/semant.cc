@@ -81,12 +81,13 @@ static void initialize_constants(void)
     val         = idtable.add_string("_val");
 }
 
+ClassTable* classTable;
+SymbolTable<char*, Class__class>* cTable;
+SymbolTable<char*, Entry>* symbolTable;
 
+Class_ curClass;
 
 ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) {
-
-    /* Fill this in */
-
 }
 
 void ClassTable::install_basic_classes() {
@@ -242,11 +243,22 @@ void program_class::semant()
     initialize_constants();
 
     /* ClassTable constructor may do some semantic analysis */
-    ClassTable *classtable = new ClassTable(classes);
+    classTable = new ClassTable(classes);
 
     /* some semantic analysis code may go here */
-    
+    cTable = new SymbolTable<char*, Class__class>();
+    cTable->enterscope();
 
+    classtable->install_basic_classes();
+
+    symbolTable = new SymbolTable<char*, Entry>();
+
+    try {
+        preprocess();
+        analyze();
+    } catch (const char* msg) {
+        classTable->semant_error(curClass) << msg << endl;
+    }
 
     if (classtable->errors()) {
 	    cerr << "Compilation halted due to static semantic errors." << endl;
@@ -254,4 +266,14 @@ void program_class::semant()
     }
 }
 
+/* The implementation details for classes methods
+*/
+void program_class::preprocess() 
+{
+    // check inheritance
+    
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
+        curClass = classes->nth(i);
 
+    }
+}
