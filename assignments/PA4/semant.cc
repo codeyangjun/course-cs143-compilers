@@ -636,11 +636,6 @@ void formal_class::analyze()
 /*
  * Branch Class
  */
-Symbol branch_class::get_name()
-{
-    return name;
-}
-
 Symbol branch_class::get_decl_type()
 {
     return type_decl;
@@ -656,3 +651,82 @@ Symbol branch_class::analyze()
     symbolTable->addid(name->get_string(), type_decl);
     expr->analyze();
 }
+
+/*
+ * Assign Class
+ */
+void assign_class::analyze()
+{
+    expr->analyze();
+    Symbol expr_type = expr->get_type();
+    Symbol expected_type = symbolTable->lookup(name->get_string());
+    if (expected_type == NULL) {
+        Feature attr = NULL;
+        Class_ targetClass = curClass;
+        while (true) {
+            attr = targetClass->get_attr(name->get_string());
+            if (attr != NULL) {
+                expected_type = attr->get_type();
+                break;
+            }
+            if (targetClass->get_parent() == No_class) {
+                break;
+            }
+            targetClass = cTable->lookup(targetClass->get_parent()->get_string());
+        }
+    }
+
+    if (expected_type == NULL) {
+        throw "type error in object_class";
+    }
+
+    if (!g->conform(expr_type, type)) {
+        throw "type error in assign_class";
+    }
+    type = expr_type;
+}
+
+/*
+ * Static Dispatch Class
+ */
+void static_dispatch_class::analyze()
+{
+    expr->analyze();
+    Symbol expr_type = expr->get_type();
+    if (expr_type == SELF_TYPE) {
+        expr_type = curClass->get_name();
+    }
+
+    Feature feature = NULL;
+    Class_ targetClass = cTable->lookup(expr_type->get_string());
+    while (true) {
+        feature = targetClass->get_method(name->get_string());
+        if (feature != NULL) {
+            break;
+        }
+        if (targetClass->get_parent() == No_class) {
+            break;
+        }
+        targetClass = cTable->lookup(targetClass->get_parent()->get_string());
+    }
+
+    if (feature == NULL) {
+        throw "type error in dispatch_class";
+    }
+    Symbol func_type = feature->get_type();
+    if (func_type == SELF_TYPE) {
+        func_type = expr_type;
+    }
+
+    for (int i = actual->first(); actual->more(i); i = actual->next(i)) {
+        Expression act = actual->nth(i);
+        act->analyze();
+        if (!g->conform(act->get_type(), feature->get_formals()->nth(i)->get_type())) {
+            throw "type error in dispatch_class";
+        }
+    }
+
+    type = func_type;
+}
+
+
