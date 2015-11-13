@@ -689,12 +689,12 @@ void static_dispatch_class::analyze()
 {
     expr->analyze();
     Symbol expr_type = expr->get_type();
-    if (expr_type == SELF_TYPE) {
-        expr_type = curClass->get_name();
+    if (!g->conform(expr_type, type_name)) {
+        throw "type error in static_dispatch_class";
     }
 
     Feature feature = NULL;
-    Class_ targetClass = cTable->lookup(expr_type->get_string());
+    Class_ targetClass = cTable->lookup(type_name->get_string());
     while (true) {
         feature = targetClass->get_method(name->get_string());
         if (feature != NULL) {
@@ -707,7 +707,7 @@ void static_dispatch_class::analyze()
     }
 
     if (feature == NULL) {
-        throw "type error in dispatch_class";
+        throw "type error in static_dispatch_class";
     }
     Symbol func_type = feature->get_type();
     if (func_type == SELF_TYPE) {
@@ -718,7 +718,7 @@ void static_dispatch_class::analyze()
         Expression act = actual->nth(i);
         act->analyze();
         if (!g->conform(act->get_type(), feature->get_formals()->nth(i)->get_type())) {
-            throw "type error in dispatch_class";
+            throw "type error in static_dispatch_class";
         }
     }
 
