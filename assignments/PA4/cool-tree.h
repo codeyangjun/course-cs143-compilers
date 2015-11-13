@@ -146,7 +146,7 @@ class program_class : public Program_class {
         }
         Program copy_Program();
         void dump(ostream& stream, int n);
-
+        virtual void analyze();
 #ifdef Program_SHARED_EXTRAS
         Program_SHARED_EXTRAS
 #endif

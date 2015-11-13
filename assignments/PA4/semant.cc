@@ -401,20 +401,20 @@ void program_class::analyze()
             findMainClass = true;
         }
 
-        if (strcmp(class_name, "SELF_TYPE") == 0) {
+        if (strcmp(className, "SELF_TYPE") == 0) {
             throw "SELF_TYPE redeclared(used a class name).";
         }
 
-        if (cTable->lookup(className) != null) {
+        if (cTable->lookup(className) != NULL) {
             throw "Invalid redefinition.";
         }
 
-        if (strcmp(class_name, "Object") == 0 || strcmp(class_name, "Bool") == 0 || strcmp(class_name, "Int") == 0 || strcmp(class_name, "String") == 0 || strcmp(class_name, "IO") == 0) {
+        if (strcmp(className, "Object") == 0 || strcmp(className, "Bool") == 0 || strcmp(className, "Int") == 0 || strcmp(className, "String") == 0 || strcmp(className, "IO") == 0) {
             throw "Invalid redefinition.";
         }
 
         char *parentClassName = curClass->getParent()->get_string();
-        if (strcmp(parent_class_name, "Bool") == 0 || strcmp(parent_class_name, "Int") == 0 || strcmp(parent_class_name, "String") == 0 || strcmp(parent_class_name, "SELF_TYPE") == 0) {
+        if (strcmp(parentClassName, "Bool") == 0 || strcmp(parentClassName, "Int") == 0 || strcmp(parentClassName, "String") == 0 || strcmp(parentClassName, "SELF_TYPE") == 0) {
             throw "Invalid inheritance.";
         }
 
