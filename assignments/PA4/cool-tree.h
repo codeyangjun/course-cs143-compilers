@@ -21,7 +21,6 @@ class Program_class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Program(); }
         virtual Program copy_Program() = 0;
-        virtual void preprocess() = 0;
         virtual void analyze() = 0;
 #ifdef Program_EXTRAS
         Program_EXTRAS

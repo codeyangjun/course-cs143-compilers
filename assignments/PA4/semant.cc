@@ -1,8 +1,8 @@
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <map>
+#include <set>
 #include "semant.h"
 #include "utilities.h"
 
@@ -261,7 +261,6 @@ void program_class::semant()
     symbolTable = new SymbolTable<char*, Entry>();
 
     try {
-        preprocess();
         analyze();
     } catch (const char* msg) {
         classTable->semant_error(curClass) << msg << endl;
@@ -376,7 +375,7 @@ Symbol InheritanceGraph::lca(Symbol a, Symbol b)
 /*
  * Program Class
  */
-void program_class::preprocess() 
+void program_class::analyze() 
 {
     // check inheritance
     g = new InheritanceGraph();
@@ -424,10 +423,7 @@ void program_class::preprocess()
     if (!findMainClass) {
         classTable->semant_error() << "Main Class is not defined." << endl;
     }
-}
 
-void program_class::analyze()
-{
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         curClass = classes->nth(i);
         if (ctable->lookup(cur_class->get_parent()->get_string()) == NULL) {
