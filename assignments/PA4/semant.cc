@@ -676,7 +676,7 @@ void assign_class::analyze()
         throw "type error in object_class";
     }
 
-    if (!g->conform(expr_type, type)) {
+    if (!g->conform(expr_type, expected_type)) {
         throw "type error in assign_class";
     }
     type = expr_type;
@@ -1026,12 +1026,7 @@ void string_const_class::analyze()
  */
 void new__class::analyze()
 {
-    if (type_name == SELF_TYPE) {
-        type = curClass->get_name();
-    }
-    else {
-        type = type_name;
-    }
+    type = type_name;
 }
 
 /*
