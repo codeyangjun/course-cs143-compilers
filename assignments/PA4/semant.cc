@@ -972,9 +972,34 @@ void lt_class::analyze()
  */
 void eq_class::analyze()
 {
-    if (!validate_comparison_expr(e1, e2)) {
-        throw "type error in eq_class";
+    e1->analyze();
+    e2->analyze();
+
+    if (e1->get_type() == Int) {
+        if (e2->get_type() == Int)
+            type = Bool;
+        else {
+            type = Object;
+            throw "type error in eq_class";
+        }
     }
+    if (e1->get_type() == Str) {
+        if (e2->get_type() == Str)
+            type = Bool;
+        else {
+            type = Object;
+            throw "type error in eq_class";
+        }
+    }
+    if (e1->get_type() == Bool) {
+        if (e2->get_type() == Bool)
+            type = Bool;
+        else {
+            type = Object;
+            throw "type error in eq_class";
+        }
+    }
+    type = Bool;
 }
 
 /*
