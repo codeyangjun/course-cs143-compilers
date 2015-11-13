@@ -12,7 +12,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="86a7a00a-d41d-4c9a-9305-36b7a42036ad" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/assignments/PA4/cool-tree.h" afterPath="$PROJECT_DIR$/assignments/PA4/cool-tree.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/assignments/PA4/semant.cc" afterPath="$PROJECT_DIR$/assignments/PA4/semant.cc" />
     </list>
     <ignored path="course-cs143-compilers.iws" />
@@ -49,8 +48,8 @@
       <file leaf-file-name="semant.cc" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/assignments/PA4/semant.cc">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.94690263">
-              <caret line="826" column="0" selection-start-line="826" selection-start-column="0" selection-end-line="826" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="0" column="10" selection-start-line="0" selection-start-column="9" selection-end-line="0" selection-end-column="10" />
               <folding />
             </state>
           </provider>
@@ -384,8 +383,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/assignments/PA4/semant.cc">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.94690263">
-          <caret line="826" column="0" selection-start-line="826" selection-start-column="0" selection-end-line="826" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="10" selection-start-line="0" selection-start-column="9" selection-end-line="0" selection-end-column="10" />
           <folding />
         </state>
       </provider>
