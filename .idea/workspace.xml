@@ -12,6 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="86a7a00a-d41d-4c9a-9305-36b7a42036ad" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/assignments/PA4/cool-tree.h" afterPath="$PROJECT_DIR$/assignments/PA4/cool-tree.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/assignments/PA4/semant.cc" afterPath="$PROJECT_DIR$/assignments/PA4/semant.cc" />
     </list>
     <ignored path="course-cs143-compilers.iws" />
@@ -37,7 +38,7 @@
         <entry file="file://$PROJECT_DIR$/assignments/PA4/cool-tree.h">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="423" column="19" selection-start-line="423" selection-start-column="6" selection-end-line="423" selection-end-column="19" />
+              <caret line="830" column="8" selection-start-line="830" selection-start-column="8" selection-end-line="830" selection-end-column="8" />
               <folding>
                 <element signature="e#3653#3674#0" expanded="true" />
               </folding>
@@ -48,8 +49,8 @@
       <file leaf-file-name="semant.cc" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/assignments/PA4/semant.cc">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="0" column="10" selection-start-line="0" selection-start-column="9" selection-end-line="0" selection-end-column="10" />
+            <state vertical-scroll-proportion="0.94690263">
+              <caret line="1016" column="1" selection-start-line="1016" selection-start-column="1" selection-end-line="1016" selection-end-column="1" />
               <folding />
             </state>
           </provider>
@@ -374,7 +375,7 @@
     <entry file="file://$PROJECT_DIR$/assignments/PA4/cool-tree.h">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="423" column="19" selection-start-line="423" selection-start-column="6" selection-end-line="423" selection-end-column="19" />
+          <caret line="830" column="8" selection-start-line="830" selection-start-column="8" selection-end-line="830" selection-end-column="8" />
           <folding>
             <element signature="e#3653#3674#0" expanded="true" />
           </folding>
@@ -383,8 +384,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/assignments/PA4/semant.cc">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="10" selection-start-line="0" selection-start-column="9" selection-end-line="0" selection-end-column="10" />
+        <state vertical-scroll-proportion="0.94690263">
+          <caret line="1016" column="1" selection-start-line="1016" selection-start-column="1" selection-end-line="1016" selection-end-column="1" />
           <folding />
         </state>
       </provider>

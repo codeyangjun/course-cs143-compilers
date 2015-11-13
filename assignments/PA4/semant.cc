@@ -824,3 +824,194 @@ void typcase_class::analyze()
     type = join_type;
 }
 
+/*
+ * Block Class
+ */
+void block_class::analyze()
+{
+    Expression last = NULL;
+    for (int i = body->first(); body->more(i); i = body->next(i)) {
+        Expression e = body->nth(i);
+        e->analyze();
+        last = e;
+    }
+    if (last != NULL) {
+        type = last->get_type();
+    }
+}
+
+/*
+ * Let Class
+ */
+void let_class::analyze()
+{
+    if (identifier == self) {
+        throw "type error in let_class";
+    }
+    init->analyze();
+    Symbol init_type = init->get_type();
+
+    symbolTable->enterscope();
+    if (init_type != No_type && g->conform(init_type, type_decl) == false) {
+        throw "type error in let_class";
+    }
+    symbolTable->addid(identifier->get_string(), type_decl);
+    body->analyze();
+    type = body->get_type();
+    symbolTable->exitscope();
+}
+
+/*
+ * Plus Class
+ */
+void plus_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Sub Class
+ */
+void sub_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Mul Class
+ */
+void mul_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Divide Class
+ */
+void divide_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Neg Class
+ */
+void neg_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Lt Class
+ */
+void lt_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Eq Class
+ */
+void eq_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Leq Class
+ */
+void leq_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Comp Class
+ */
+void comp_class::analyze()
+{
+    // TODO
+}
+
+/*
+ * Int Const Class
+ */
+void int_const_class::analyze()
+{
+    type = Int;
+}
+
+/*
+ * Bool Const Class
+ */
+void bool_const_class::analyze()
+{
+    type = Bool;
+}
+
+/*
+ * String Const Class
+ */
+void string_const_class::analyze()
+{
+    type = Str;
+}
+
+/*
+ * New Class
+ */
+void new__class::analyze()
+{
+    if (type_name == SELF_TYPE) {
+        type = cur_class->get_name();
+    }
+    else {
+        type = type_name;
+    }
+}
+
+/*
+ * Isvoid Class
+ */
+void isvoid_class::analyze()
+{
+    e1->analyze();
+    type = Bool;
+}
+
+/*
+ * No Expr Class
+ */
+void no_expr_class::analyze() {
+    type = No_type;
+}
+
+/*
+ * Object Class
+ */
+void object_class::analyze()
+{
+    if (name == self) {
+        type = SELF_TYPE;
+        return;
+    }
+    type = symbolTable->lookup(name->get_string());
+    if (type == NULL) {
+        Feature attr = NULL;
+        Class_ targetClass = curClass;
+        while (true) {
+            attr = targetClass->get_attr(name->get_string());
+            if (attr != NULL) {
+                type = attr->get_type();
+                break;
+            }
+            if (targetClass->get_parent() == No_class) {
+                break;
+            }
+            targetClass = cTable->lookup(targetClass->get_parent()->get_string());
+        }
+    }
+    if (type == NULL) {
+        throw "type error in object_class";
+    }
+}

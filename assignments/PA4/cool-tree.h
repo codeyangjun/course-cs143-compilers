@@ -453,6 +453,7 @@ class block_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -479,6 +480,7 @@ class let_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -501,6 +503,7 @@ class plus_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -523,6 +526,7 @@ class sub_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -545,6 +549,7 @@ class mul_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -567,6 +572,7 @@ class divide_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -587,6 +593,7 @@ class neg_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -609,6 +616,7 @@ class lt_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -631,6 +639,7 @@ class eq_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -653,6 +662,7 @@ class leq_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -673,6 +683,7 @@ class comp_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -693,6 +704,7 @@ class int_const_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -713,6 +725,7 @@ class bool_const_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -733,6 +746,7 @@ class string_const_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -753,6 +767,7 @@ class new__class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -773,6 +788,7 @@ class isvoid_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -791,6 +807,7 @@ class no_expr_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -811,6 +828,7 @@ class object_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
