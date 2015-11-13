@@ -413,7 +413,7 @@ void program_class::analyze()
             throw "Invalid redefinition.";
         }
 
-        char *parentClassName = curClass->getParent()->get_string();
+        char *parentClassName = curClass->get_parent()->get_string();
         if (strcmp(parentClassName, "Bool") == 0 || strcmp(parentClassName, "Int") == 0 || strcmp(parentClassName, "String") == 0 || strcmp(parentClassName, "SELF_TYPE") == 0) {
             throw "Invalid inheritance.";
         }
@@ -426,7 +426,7 @@ void program_class::analyze()
 
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         curClass = classes->nth(i);
-        if (ctable->lookup(cur_class->get_parent()->get_string()) == NULL) {
+        if (cTable->lookup(curClass->get_parent()->get_string()) == NULL) {
             throw "Inheritance from an undefined class.";
         }
         symbolTable->enterscope();
@@ -505,7 +505,7 @@ void method_class::analyze()
     }
 
     // find method from ancestors
-    Feature feature = null;
+    Feature feature = NULL;
     Class_ targetClass = cTable->lookup(curClass->get_parent()->get_string());
     while (true) {
         feature = targetClass->get_method(name->get_string());
@@ -558,7 +558,7 @@ Symbol attr_class::get_name()
     return name;
 }
 
-Symbol attr_class::get_formals()
+Formals attr_class::get_formals()
 {
     return NULL;
 }
@@ -579,7 +579,7 @@ void attr_class::analyze()
     }
 
     // find attrs from ancestors
-    Feature feature = null;
+    Feature feature = NULL;
     Class_ targetClass = cTable->lookup(curClass->get_parent()->get_string());
     while (true) {
         feature = targetClass->get_attr(name->get_string());
@@ -642,7 +642,7 @@ Symbol branch_class::get_expr_type()
     return expr->get_type();
 }
 
-Symbol branch_class::analyze()
+void branch_class::analyze()
 {
     symbolTable->addid(name->get_string(), type_decl);
     expr->analyze();
