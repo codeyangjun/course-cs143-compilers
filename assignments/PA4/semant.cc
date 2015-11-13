@@ -603,6 +603,56 @@ void attr_class::analyze()
     if (init_type != No_type && g->conform(init_type, type_decl) == false) {
         throw "type error in attr_class";
     }
-    symboltable->addid(name->get_string(), type_decl);
+    symbolTable->addid(name->get_string(), type_decl);
 }
 
+/*
+ * Formal Class
+ */
+Symbol formal_class::get_name()
+{
+    return name;
+}
+
+Symbol formal_class::get_type()
+{
+    return type_decl;
+}
+
+void formal_class::analyze()
+{
+    if (symbolTable->probe(name->get_string()) != NULL) {
+        throw "Duplicate name in formal param list";
+    }
+    if (name == self) {
+        throw "Self as name of a formal parameter (illegal)";
+    }
+    if (type_decl == SELF_TYPE) {
+        throw "SELF_TYPE given as a parameter type (illegal)";
+    }
+    symbolTable->addid(name->get_string(), type_decl);
+}
+
+/*
+ * Branch Class
+ */
+Symbol branch_class::get_name()
+{
+    return name;
+}
+
+Symbol branch_class::get_decl_type()
+{
+    return type_decl;
+}
+
+Symbol branch_class::get_expr_type()
+{
+    return expr->get_type();
+}
+
+Symbol branch_class::analyze()
+{
+    symbolTable->addid(name->get_string(), type_decl);
+    expr->analyze();
+}

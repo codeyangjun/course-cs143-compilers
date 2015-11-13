@@ -71,6 +71,7 @@ class Formal_class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Formal(); }
         virtual Formal copy_Formal() = 0;
+        virtual Symbol get_name() = 0;
         virtual Symbol get_type() = 0;
         virtual void analyze() = 0;
 #ifdef Formal_EXTRAS
@@ -100,7 +101,10 @@ class Case_class : public tree_node {
     public:
         tree_node *copy()		 { return copy_Case(); }
         virtual Case copy_Case() = 0;
-
+        virtual Symbol get_name() = 0;
+        virtual Symbol get_decl_type() = 0;
+        virtual Symbol get_expr_type() = 0;
+        virtual void analyze() = 0;
 #ifdef Case_EXTRAS
         Case_EXTRAS
 #endif
