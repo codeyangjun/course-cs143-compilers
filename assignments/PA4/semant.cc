@@ -862,11 +862,59 @@ void let_class::analyze()
 }
 
 /*
+ * Help Function for Arithmetic Expression
+ */
+bool Expression_class::validate_arithmetic_expr(Expression e1, Expression e2 = NULL) {
+    e1->analyze();
+    if (e2) {
+        e2->analyze();
+    }
+    if (e1->get_type() == Int && (e2 == NULL || e2->get_type() == Int)) {
+        type = Int;
+        return true;
+    } else {
+        type = Object;
+        return false;
+    }
+}
+
+/*
+ * Help Function for Comparison Expression
+ */
+bool Expression_class::validate_comparison_expr(Expression e1, Expression e2 = NULL)
+{
+    e1->analyze();
+    if (e2) {
+        e2->analyze();
+        if (e1->get_type() == Int && e2->get_type() == Int) {
+            type = Bool;
+            return true;
+        }
+        else {
+            type = Object;
+            return false;
+        }
+    }
+    else {
+        if (e1->get_type() == Bool) {
+            type = Bool;
+            return true;
+        }
+        else {
+            type = Object;
+            return false;
+        }
+    }
+}
+
+/*
  * Plus Class
  */
 void plus_class::analyze()
 {
-    // TODO
+    if (!validate_arithmetic_expr(e1, e2)) {
+        throw "type error in plus_class";
+    }
 }
 
 /*
@@ -874,7 +922,9 @@ void plus_class::analyze()
  */
 void sub_class::analyze()
 {
-    // TODO
+    if (!validate_arithmetic_expr(e1, e2)) {
+        throw "type error in sub_class";
+    }
 }
 
 /*
@@ -882,7 +932,9 @@ void sub_class::analyze()
  */
 void mul_class::analyze()
 {
-    // TODO
+    if (!validate_arithmetic_expr(e1, e2)) {
+        throw "type error in mul_class";
+    }
 }
 
 /*
@@ -890,7 +942,9 @@ void mul_class::analyze()
  */
 void divide_class::analyze()
 {
-    // TODO
+    if (!validate_arithmetic_expr(e1, e2)) {
+        throw "type error in divide_class";
+    }
 }
 
 /*
@@ -898,7 +952,9 @@ void divide_class::analyze()
  */
 void neg_class::analyze()
 {
-    // TODO
+    if (!validate_arithmetic_expr(e1)) {
+        throw "type error in neg_class";
+    }
 }
 
 /*
@@ -906,7 +962,9 @@ void neg_class::analyze()
  */
 void lt_class::analyze()
 {
-    // TODO
+    if (!validate_comparison_expr(e1, e2)) {
+        throw "type error in lt_class";
+    }
 }
 
 /*
@@ -914,7 +972,9 @@ void lt_class::analyze()
  */
 void eq_class::analyze()
 {
-    // TODO
+    if (!validate_comparison_expr(e1, e2)) {
+        throw "type error in eq_class";
+    }
 }
 
 /*
@@ -922,7 +982,9 @@ void eq_class::analyze()
  */
 void leq_class::analyze()
 {
-    // TODO
+    if (!validate_comparison_expr(e1, e2)) {
+        throw "type error in leq_class";
+    }
 }
 
 /*
@@ -930,7 +992,9 @@ void leq_class::analyze()
  */
 void comp_class::analyze()
 {
-    // TODO
+    if (!validate_comparison_expr(e1)) {
+        throw "type error in comp_class";
+    }
 }
 
 /*

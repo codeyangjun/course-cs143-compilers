@@ -83,6 +83,9 @@ class Formal_class : public tree_node {
 typedef class Expression_class *Expression;
 
 class Expression_class : public tree_node {
+    protected:
+        bool validate_arithmetic_expr(Expression, Expression);
+        bool validate_comparison_expr(Expression, Expression);
     public:
         tree_node *copy()		 { return copy_Expression(); }
         virtual Expression copy_Expression() = 0;
