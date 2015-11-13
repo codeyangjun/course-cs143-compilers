@@ -753,7 +753,7 @@ void dispatch_class::analyze() {
     }
     Symbol func_type = feature->get_type();
     if (func_type == SELF_TYPE) {
-        func_type = expr_type;
+        func_type = expr->get_type();
     }
 
     for (int i = actual->first(); actual->more(i); i = actual->next(i)) {

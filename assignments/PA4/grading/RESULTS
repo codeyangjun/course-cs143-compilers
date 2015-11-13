@@ -1,6 +1,1 @@
-	-1 (cells)	 Complex program
-	-1 (compare)	 Legal equality comparison
-	-1 (hairyscary)	 Messy legal Cool program
-	-1 (io)	 IO methods
-	-1 (list)	 List program
-	-1 (nomain)	 Missing Main class
+	(our tests)	Passed all tests -- congratulations!
