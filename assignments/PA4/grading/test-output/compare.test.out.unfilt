@@ -1,0 +1,2 @@
+./compare.test:1: type error in eq_class
+Compilation halted due to static semantic errors.

@@ -807,10 +807,10 @@ void typcase_class::analyze()
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
         symbolTable->enterscope();
         Case c = cases->nth(i);
-        if (casetable->lookup(c->get_decl_type()->get_string()) != NULL) {
+        if (caseTable->lookup(c->get_decl_type()->get_string()) != NULL) {
             throw "Duplicate branch Int in case statement.";
         }
-        casetable->addid(c->get_decl_type()->get_string(), c->get_decl_type());
+        caseTable->addid(c->get_decl_type()->get_string(), c->get_decl_type());
         c->analyze();
 
         if (join_type == NULL) {
@@ -1027,7 +1027,7 @@ void string_const_class::analyze()
 void new__class::analyze()
 {
     if (type_name == SELF_TYPE) {
-        type = cur_class->get_name();
+        type = curClass->get_name();
     }
     else {
         type = type_name;
