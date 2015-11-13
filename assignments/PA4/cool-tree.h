@@ -172,6 +172,11 @@ class class__class : public Class__class {
         }
         Class_ copy_Class_();
         void dump(ostream& stream, int n);
+        virtual Symbol get_name();
+        virtual Symbol get_parent();
+        virtual Feature get_method(char*);
+        virtual Feature get_attr(char*);
+        virtual void analyze();
 
 #ifdef Class__SHARED_EXTRAS
         Class__SHARED_EXTRAS
@@ -198,6 +203,10 @@ class method_class : public Feature_class {
         }
         Feature copy_Feature();
         void dump(ostream& stream, int n);
+        virtual Symbol get_name();
+        virtual Formals get_formals();
+        virtual Symbol get_type();
+        virtual void analyze();
 
 #ifdef Feature_SHARED_EXTRAS
         Feature_SHARED_EXTRAS
@@ -222,6 +231,10 @@ class attr_class : public Feature_class {
         }
         Feature copy_Feature();
         void dump(ostream& stream, int n);
+        virtual Symbol get_name();
+        virtual Formals get_formals();
+        virtual Symbol get_type();
+        virtual void analyze();
 
 #ifdef Feature_SHARED_EXTRAS
         Feature_SHARED_EXTRAS
@@ -244,6 +257,9 @@ class formal_class : public Formal_class {
         }
         Formal copy_Formal();
         void dump(ostream& stream, int n);
+        virtual Symbol get_name();
+        virtual Symbol get_type();
+        virtual void analyze();
 
 #ifdef Formal_SHARED_EXTRAS
         Formal_SHARED_EXTRAS
@@ -268,6 +284,9 @@ class branch_class : public Case_class {
         }
         Case copy_Case();
         void dump(ostream& stream, int n);
+        virtual Symbol get_decl_type();
+        virtual Symbol get_expr_type();
+        virtual void analyze();
 
 #ifdef Case_SHARED_EXTRAS
         Case_SHARED_EXTRAS
@@ -290,6 +309,7 @@ class assign_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -316,6 +336,7 @@ class static_dispatch_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
