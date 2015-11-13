@@ -361,6 +361,7 @@ class dispatch_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -385,6 +386,7 @@ class cond_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -407,6 +409,7 @@ class loop_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS
@@ -429,6 +432,7 @@ class typcase_class : public Expression_class {
         }
         Expression copy_Expression();
         void dump(ostream& stream, int n);
+        virtual void analyze();
 
 #ifdef Expression_SHARED_EXTRAS
         Expression_SHARED_EXTRAS

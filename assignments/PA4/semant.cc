@@ -725,4 +725,102 @@ void static_dispatch_class::analyze()
     type = func_type;
 }
 
+/*
+ * Dispatch Class
+ */
+void dispatch_class::analyze() {
+    expr->analyze();
+    Symbol expr_type = expr->get_type();
+    if (expr_type == SELF_TYPE) {
+        expr_type = curClass->get_name();
+    }
+
+    Feature feature = NULL;
+    Class_ targetClass = cTable->lookup(expr_type->get_string());
+    while (true) {
+        feature = targetClass->get_method(name->get_string());
+        if (feature != NULL) {
+            break;
+        }
+        if (targetClass->get_parent() == No_class) {
+            break;
+        }
+        targetClass = cTable->lookup(targetClass->get_parent()->get_string());
+    }
+
+    if (feature == NULL) {
+        throw "type error in dispatch_class";
+    }
+    Symbol func_type = feature->get_type();
+    if (func_type == SELF_TYPE) {
+        func_type = expr_type;
+    }
+
+    for (int i = actual->first(); actual->more(i); i = actual->next(i)) {
+        Expression act = actual->nth(i);
+        act->analyze();
+        if (!g->conform(act->get_type(), feature->get_formals()->nth(i)->get_type())) {
+            throw "type error in dispatch_class";
+        }
+    }
+
+    type = func_type;
+}
+
+/*
+ * Cond Class
+ */
+void cond_class::analyze()
+{
+    pred->analyze();
+    if (pred->get_type() != Bool) {
+        throw "type error in cond_class";
+    }
+    then_exp->analyze();
+    else_exp->analyze();
+    type = g->lca(then_exp->get_type(), else_exp->get_type());
+}
+
+/*
+ * Loop Class
+ */
+void loop_class::analyze()
+{
+    pred->analyze();
+    if (pred->get_type() != Bool) {
+        throw "type error in cond_class";
+    }
+    body->analyze();
+    type = Object;
+}
+
+/*
+ * Typecase Class
+ */
+void typcase_class::analyze()
+{
+    expr->analyze();
+    Symbol expr_type = expr->get_type();
+    Symbol join_type = NULL;
+    SymbolTable<char*, Entry>* caseTable = new SymbolTable<char*, Entry>();
+    caseTable->enterscope();
+    for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
+        symbolTable->enterscope();
+        Case c = cases->nth(i);
+        if (casetable->lookup(c->get_decl_type()->get_string()) != NULL) {
+            throw "Duplicate branch Int in case statement.";
+        }
+        casetable->addid(c->get_decl_type()->get_string(), c->get_decl_type());
+        c->analyze();
+
+        if (join_type == NULL) {
+            join_type = c->get_expr_type();
+        } else {
+            join_type = g->lca(join_type, c->get_expr_type());
+        }
+
+        symbolTable->exitscope();
+    }
+    type = join_type;
+}
 
