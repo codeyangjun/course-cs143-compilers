@@ -421,7 +421,7 @@ void program_class::analyze()
         cTable->addid(className, curClass);
     }
     if (!findMainClass) {
-        classTable->semant_error() << "Main Class is not defined." << endl;
+        classTable->semant_error() << "Class Main is not defined." << endl;
     }
 
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
