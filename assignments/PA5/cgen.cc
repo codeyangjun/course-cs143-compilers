@@ -791,9 +791,57 @@ void CgenNode::set_parentnd(CgenNodeP p) {
     parentnd = p;
 }
 
+int code_label_class(CgenNode* node, int& label) {
+    Symbol s = node->get_name();
+    classTag[s] = label;
+    int maxChild = label++;
+
+    for (List<CgenNode>* l = node->get_children(); l; l = l->tl()) {
+        maxChild = code_label_class(l->hd(), label);
+    }
+    classMaxChild[s] = maxChild;
+    return maxChild;
+}
+
+static int get_object_size(CgenNode* node) {
+    if (node == NULL) {
+        return 0;
+    }
+    int size = get_object_size(node->get_parentnd());
+    Features features = node->features;
+    for (int i = features->first(); features->more(i); i = features->next(i)) {
+        Feature feature = features->nth(i);
+        if (f->type() == 1) {
+            ++size;
+        }
+    }
+    return size;
+}
 
 void CgenClassTable::code() {
-    // TODO : preprocessing
+    // initialize the class tag
+    for (List<CgenNode>* l = nds; l; l = l->tl()) {
+        CgenNode* node = l ->hd();
+        Symbol s = node->get_name();
+        if (s == Object) {
+            int label = 0;
+            code_label_class(node, label);
+            break;
+        }
+    }
+    intclasstag = classTag[Int];
+    boolclasstag = classTag[Bool];
+    stringclasstag = classTag[Str];
+
+    // initialize the object size
+    for (List<CgenNode>* l = nds; l; l = l->tl()) {
+        CgenNode* node = l ->hd();
+        Symbol s = node->get_name();
+        if (objectSize.find(s) != objectSize.end()) {
+            continue;
+        }
+        objectSize[s] =
+    }
 
     if (cgen_debug) cout << "coding global data" << endl;
     code_global_data();

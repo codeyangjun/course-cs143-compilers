@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <map>
 #include "emit.h"
 #include "cool-tree.h"
 #include "symtab.h"
@@ -25,7 +26,10 @@ private:
     int stringclasstag;
     int intclasstag;
     int boolclasstag;
-    std::map<Symbol, int> classtag
+    std::map<Symbol, int> classTag, classMaxChild, objectSize;
+
+// the following methods are used for preprocessing
+    int code_label_class(CgenNode* node, int& label);
 
 
 // The following methods emit code for
