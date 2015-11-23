@@ -1,4 +1,4 @@
-
+f
 //**************************************************************
 //
 // Code generator SKELETON
@@ -616,9 +616,12 @@ void CgenClassTable::code_constants()
   code_bools(boolclasstag);
 }
 
+void CgenClassTable::code
+
 
 CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
 {
+   // TODO: change
    stringclasstag = 0 /* Change to your String class tag here */;
    intclasstag =    0 /* Change to your Int class tag here */;
    boolclasstag =   0 /* Change to your Bool class tag here */;
@@ -819,6 +822,8 @@ void CgenNode::set_parentnd(CgenNodeP p)
 
 void CgenClassTable::code()
 {
+  // TODO : preprocessing
+
   if (cgen_debug) cout << "coding global data" << endl;
   code_global_data();
 

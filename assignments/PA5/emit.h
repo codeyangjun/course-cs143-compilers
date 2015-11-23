@@ -36,7 +36,6 @@
 #define STRCONST_PREFIX      "str_const"
 #define BOOLCONST_PREFIX     "bool_const"
 
-
 #define EMPTYSLOT            0
 #define LABEL                ":\n"
 
@@ -70,7 +69,11 @@
 #define SELF "$s0"		// Ptr to self (callee saves) 
 #define T1   "$t1"		// Temporary 1 
 #define T2   "$t2"		// Temporary 2 
-#define T3   "$t3"		// Temporary 3 
+#define T3   "$t3"		// Temporary 3
+#define T3   "$t4"		// Temporary 4
+#define T3   "$t5"		// Temporary 5
+#define T3   "$t6"		// Temporary 6
+#define T3   "$t7"		// Temporary 7
 #define SP   "$sp"		// Stack pointer 
 #define FP   "$fp"		// Frame pointer 
 #define RA   "$ra"		// Return address 
