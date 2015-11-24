@@ -814,6 +814,143 @@ static int get_object_size(CgenNode* node) {
     return size;
 }
 
+void CgenClassTable::code_name_tab() {
+    str << CLASSNAMETAB << LABEL;
+
+    std::vector<std::pair<int, Symbol> > tags;
+    for (std::map<Symbol, int>::iterator it = classtag.begin(); it != classtag.end(); it++) {
+        tags.push_back(std::make_pair(it->second, it->first));
+    }
+    std::sort(tags.begin(), tags.end());
+    for (int i = 0; i < tags.size(); ++i) {
+        char* className = tags[i].second->get_string();
+        str << WORD;
+        stringtable.lookup_string(className)->code_ref(str);
+        str << endl;
+    }
+}
+
+void CgenClassTable::code_obj_tab() {
+    str << CLASSOBJTAB << LABEL;
+
+    std::vector<std::pair<int, Symbol> > tags;
+    for (std::map<Symbol, int>::iterator it = classtag.begin(); it != classtag.end(); it++) {
+        tags.push_back(std::make_pair(it->second, it->first));
+    }
+    std::sort(tags.begin(), tags.end());
+    for (int i = 0; i < tags.size(); ++i) {
+        Symbol s = tags[i].second;
+        str << WORD;
+        emit_protobj_ref(s, str);
+        str << endl;
+        str << WORD;
+        emit_init_ref(s, str);
+    }
+}
+
+static void code_dispatch_helper(CgenNode* node, std::list<std::pair<Symbol, Symbol> >& functions) {
+    if (node == NULL) {
+        return;
+    }
+    code_dispatch_helper(node->get_parentnd(), functions);
+    Features features = node->features;
+    for (int i = features->first(); features->more(i); i = features->next(i)) {
+        Feature feature = features->nth(i);
+        if (feature->get_type() == 0) {
+            bool found = false;
+            for (std::list<std::pair<Symbol, Symbol> >::iterator it = functions.begin(); it != functions.end(); it++) {
+                // func name equaals
+                if (it->second == feature->get_name()) {
+                    found = true;
+                    it->first = node->get_name();
+                }
+            }
+            if (!found) {
+                functions.push_back(std::make_pair(node->get_name(), feature->get_name()));
+            }
+        }
+    }
+}
+
+void CgenClassTable::code_dispatch() {
+    for (List<CgenNode>* l = nds; l; l = l->tl()) {
+        CgenNode* node = l->hd();
+        selfClass = node->get_name();
+        std::list<std::pair<Symbol, Symbol> > functions;
+        code_dispatch_helper(node, functions);
+
+        int offset = 0;
+        emit_disptable_ref(selfClass, str);
+        str << LABEL;
+        for (std::list<std::pair<Symbol, Symbol> >::iterator it = functions.begin(); it != functions.end(); it++) {
+            str << WORD;
+            str << it->first;
+            str << ".";
+            str << it->second;
+            str << endl;
+            classMethodOffset[selfClass][it->second] = offset++;
+        }
+    }
+}
+
+static void code_prototype_helper(CgenNode* node, int& attr_offset) {
+    if (node == NULL) {
+        return;
+    }
+    code_prototype_helper(node->get_parentnd(), attr_offset);
+
+    Features features = node->features;
+    for (int i = features->first(); features->more(i); i = features->next(i)) {
+        Feature feature = features->nth(i);
+        if (feature->get_type() == 1) {
+            attr_class* attr = (attr_class*)f;
+            Symbol type = attr->type_decl;
+            classAttrTypeoffset[selfClass][attr->get_name()] = std::make_pair(attr->type_decl, attr_offset++);
+
+            if (type == Int) {
+                IntEntryP lensym = inttable.add_int(0);
+                str << WORD;
+                lensym->code_ref(str);
+                str << endl;
+            } else if (type == Bool) {
+                str << WORD;
+                falsebool.code_ref(str);
+                str << endl;
+            } else if (type == Str) {
+                str << WORD;
+                stringtable.lookup_string("")->code_ref(str);
+                str << endl;
+            } else {
+                str << WORD << 0 << endl;
+            }
+        }
+    }
+}
+
+void CgenClassTable::code_prototype() {
+    for (List<CgenNode>* l = nds; l; l = l->tl()) {
+        CgenNode* node = l->hd();
+        Symbol s = node->get_name();
+        selfClass = s;
+        int tag = classTag[s];
+
+        str << WORD << "-1" << endl;
+        emit_protobj_ref(s, str);
+        str << LABEL;
+
+        str << WORD << tag << endl;
+
+        int classSize = objectSize[s];
+        str << WORD << classSize + 3 << endl;
+
+        str << WORD << s << "_dispTab" << endl;
+
+        int attr_offset = 3;
+        code_prototype_helper(node, attr_offset);
+    }
+}
+
+
 void CgenClassTable::code() {
     // initialize the class tag
     for (List<CgenNode>* l = nds; l; l = l->tl()) {
@@ -853,6 +990,11 @@ void CgenClassTable::code() {
 //                   - class_nameTab
 //                   - dispatch tables
 //
+    code_name_tab();
+    code_obj_tab();
+    code_dispatch();
+    code_prototype();
+
 
     if (cgen_debug) cout << "coding global text" << endl;
     code_global_text();

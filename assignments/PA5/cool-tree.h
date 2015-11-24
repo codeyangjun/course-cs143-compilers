@@ -57,6 +57,7 @@ public:
 
     virtual Feature copy_Feature() = 0;
     virtual int get_type() = 0;
+    virtual Symbol get_name() = 0;
 
 #ifdef Feature_EXTRAS
 

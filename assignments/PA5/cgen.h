@@ -27,6 +27,9 @@ private:
     int intclasstag;
     int boolclasstag;
     std::map<Symbol, int> classTag, classMaxChild, objectSize;
+    Symbol selfClass = 0;
+    std::map<Symbol, std::map<Symbol, int> > classMethodOffset;
+    std::map<Symbol, std::map<Symbol, std::pair<Symbol, int> > > classAttrTypeoffset;
 
 // the following methods are used for preprocessing
     int code_label_class(CgenNode* node, int& label);
@@ -44,6 +47,14 @@ private:
     void code_select_gc();
 
     void code_constants();
+
+    void code_name_tab();
+
+    void code_obj_tab();
+
+    void code_dispatch();
+
+    void code_prototype();
 
 // The following creates an inheritance graph from
 // a list of classes.  The graph is implemented as
