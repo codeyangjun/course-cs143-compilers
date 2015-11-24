@@ -1183,82 +1183,551 @@ CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct) :
 //
 //*****************************************************************
 
-void assign_class::code(ostream &s) {
+void assign_class::code(ostream &s, int offset) {
+    int* p = identifiers->lookup(name->get_string());
+    if (p == NULL) {
+        int offset_ = classAttrTypeoffset[selfClass][name].second;
+        emit_store(SELF, 0, SP, s);
+        emit_addiu(SP, SP, -4, s);
+        expr->code(s, offset);
+
+        emit_load(SELF, 1, SP, s);
+        emit_store(ACC, of, SELF, s);
+        emit_addiu(SP, SP, 4, s);
+    } else {
+        int of = *p;
+        expr->code(s, offset);
+        emit_store(ACC, of, FP, s);
+    }
 }
 
-void static_dispatch_class::code(ostream &s) {
+void static_dispatch_class::code(ostream &s, int offset) {
+    int dispatch_branch = get_nextbranch();
+
+    emit_store(FP, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    emit_store(SELF, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+
+    emit_addiu(SP, SP, -(4 * actual->len()), s);
+
+    for (int i = actual->first(), of = actual->len(); actual->more(i); i = actual->next(i), of--) {
+        Expression e = actual->nth(i);
+        e->code(s, 0);
+        emit_store(ACC, of, SP, s);
+    }
+
+    expr->code(s, offset);
+
+    emit_bne(ACC, ZERO, dispatch_branch, s);
+
+    emit_load_string(ACC, stringtable.add_string(cur_filename->get_string()), s);
+
+    emit_load_imm(T1, get_line_number(), s);
+    emit_jal("_dispatch_abort", s);
+
+    int var_offset = classMethodOffset[type_name][name];
+
+    emit_label_def(dispatch_branch, s);
+
+    emit_partial_load_address(T1, s);
+    emit_disptable_ref(type_name, s);
+    s << endl;
+
+    emit_load(T1, var_offset, T1, s);
+
+    emit_jalr(T1, s);
+    emit_addiu(SP, SP, 8, s);
 }
 
-void dispatch_class::code(ostream &s) {
+void dispatch_class::code(ostream& s, int offset)
+{
+    int dispatch_branch = get_nextbranch();
+
+    emit_store(FP, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    emit_store(SELF, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+
+    emit_addiu(SP, SP, -(4 * actual->len()), s);
+
+    for (int i = actual->first(), of = actual->len(); actual->more(i); i = actual->next(i), of--) {
+        Expression e = actual->nth(i);
+        e->code(s, 0);
+        emit_store(ACC, of, SP, s);
+    }
+
+    expr->code(s, offset);
+
+    emit_bne(ACC, ZERO, dispatch_branch, s);
+
+    emit_load_string(ACC, stringtable.add_string(cur_filename->get_string()), s);
+
+    emit_load_imm(T1, get_line_number(), s);
+    emit_jal("_dispatch_abort", s);
+
+    emit_label_def(dispatch_branch, s);
+
+    int var_offset = 0;
+    if (expr->get_type() == SELF_TYPE) {
+        emit_move(ACC, SELF, s);
+        var_offset = class_method_offset[selfclass][name];
+    }
+    else {
+        var_offset = class_method_offset[expr->get_type()][name];
+    }
+
+    emit_load(T1, 2, ACC, s);
+    emit_load(T1, var_offset, T1, s);
+
+    emit_jalr(T1, s);
+    emit_addiu(SP, SP, 8, s);
 }
 
-void cond_class::code(ostream &s) {
+void cond_class::code(ostream& s, int offset)
+{
+    int true_branch = get_nextbranch();
+    int false_branch = get_nextbranch();
+    int endif_branch = get_nextbranch();
+    pred->code(s, offset);
+    emit_load(ACC, 3, ACC, s);
+    emit_bne(ACC, ZERO, true_branch, s);
+    //output false_branch label;
+    emit_label_def(false_branch, s);
+    else_exp->code(s, offset);
+    emit_branch(endif_branch, s);
+    //output true_branch label;
+    emit_label_def(true_branch, s);
+    then_exp->code(s, offset);
+    //output endif label;
+    emit_label_def(endif_branch, s);
 }
 
-void loop_class::code(ostream &s) {
+
+void loop_class::code(ostream& s, int offset)
+{
+    int while_branch = get_nextbranch();
+    int end_branch = get_nextbranch();
+    //output while_branch label;
+    emit_label_def(while_branch, s);
+    pred->code(s, offset);
+    emit_load(ACC, 3, ACC, s);
+    emit_beqz(ACC, end_branch, s); // false
+    body->code(s, offset);
+    emit_branch(while_branch, s);
+    //output end label;
+    emit_label_def(end_branch, s);
+    // set void
+    emit_move(ACC, ZERO, s);
 }
 
-void typcase_class::code(ostream &s) {
+void typcase_class::code(ostream& s, int offset)
+{
+    int unmatched_branch = get_nextbranch();
+    int try_exec = get_nextbranch();
+    int void_branch = get_nextbranch();
+    int end_branch = get_nextbranch();
+    std::vector<int> cases_branch_test;
+    std::vector<int> cases_branch_exec;
+    for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
+        cases_branch_test.push_back(get_nextbranch());
+        cases_branch_exec.push_back(get_nextbranch());
+    }
+    cases_branch_test.push_back(try_exec); // a hack
+
+    expr->code(s, offset);
+    emit_store(ACC, offset, FP, s);
+    // jump to void
+    emit_beqz(ACC, void_branch, s);
+
+    emit_load_imm(T5, -1, s);
+    emit_partial_load_address(T6, s);
+    emit_label_ref(unmatched_branch, s);
+    s << endl;
+
+    int cases_len = cases->len();
+    for (int i = cases->first(), j = 0; cases->more(i); i = cases->next(i), j++) {
+        //output case label;
+        emit_label_def(cases_branch_test[j], s);
+
+        identifiers->enterscope();
+        branch_class* branch = (branch_class*)cases->nth(i);
+        identifiers->addid(branch->name->get_string(), new int(offset));
+
+        int case_class_tag = classtag[branch->type_decl];
+        int case_max_child = class_max_child[branch->type_decl];
+        emit_load(T1, 0, ACC, s); // get expr class tag
+
+        // handle exact match first
+
+        emit_load_imm(T2, case_class_tag, s);
+        emit_beq(T1, T2, cases_branch_exec[j], s);
+
+        // case class tag should less than the expr tag, which means we jump to next case if expr class tag < case class tag
+
+        emit_blti(T1, case_class_tag, cases_branch_test[j + 1], s);
+
+        // case max child should larger than or equal to the expr tag, which means we jump to next case if expr class tag > case max child
+
+        emit_bgti(T1, case_max_child, cases_branch_test[j + 1], s);
+
+        // now we reach a potential matched case.  we compare the case_class_tag with the tag on the stack
+
+        // we jump away if the tag on the stack is larger
+
+        emit_bgti(T5, case_class_tag, cases_branch_test[j + 1], s);
+
+        // now let's update the value on the stack and update the address.
+
+        emit_load_imm(T5, case_class_tag, s);
+
+        if (j == cases_len - 1) {
+            // the last one is the best
+            emit_branch(cases_branch_exec[j], s);
+        }
+        else {
+            emit_partial_load_address(T6, s);
+            emit_label_ref(cases_branch_exec[j], s);
+            s << endl;
+
+            emit_branch(cases_branch_test[j + 1], s);
+        }
+
+        //output case label;
+        emit_label_def(cases_branch_exec[j], s);
+        branch->expr->code(s, offset - 1); /// - 1
+        // go to end
+        emit_branch(end_branch, s);
+        identifiers->exitscope();
+    }
+
+    // output try_exec label;
+
+    emit_label_def(try_exec, s);
+    emit_jalr(T6, s);
+
+    //output void label;
+    emit_label_def(void_branch, s);
+
+    // pass line # to t1 and filename to a0
+
+    emit_load_string(ACC, stringtable.lookup_string(cur_filename->get_string()), s);
+    emit_load_imm(T1, get_line_number(), s);
+    emit_jal("_case_abort2", s);
+
+    //output unmatch label;
+    emit_label_def(unmatched_branch, s);
+    emit_move(ACC, SELF, s);
+    emit_jal("_case_abort", s);
+
+    //output end label;
+    emit_label_def(end_branch, s);
 }
 
-void block_class::code(ostream &s) {
+void block_class::code(ostream& s, int offset)
+{
+    for (int i = body->first(); body->more(i); i = body->next(i)) {
+        Expression e = body->nth(i);
+        e->code(s, offset);
+    }
 }
 
-void let_class::code(ostream &s) {
+void let_class::code(ostream& s, int offset)
+{
+    identifiers->enterscope();
+    init->code(s, offset);
+    identifiers->addid(identifier->get_string(), new int(offset));
+    // handle default init
+    if (init->no_expr()) {
+        if (type_decl == Int) {
+            IntEntryP lensym = inttable.add_int(0);
+            emit_partial_load_address(ACC, s);
+            lensym->code_ref(s);
+            s << endl;
+        }
+        else if (type_decl == Bool) {
+            emit_partial_load_address(ACC, s);
+            falsebool.code_ref(s);
+            s << endl;
+        }
+        else if (type_decl == Str) {
+            emit_partial_load_address(ACC, s);
+            stringtable.lookup_string("")->code_ref(s);
+            s << endl;
+        }
+        else {
+            emit_move(ACC, ZERO, s);
+        }
+    }
+    emit_store(ACC, offset, FP, s);
+    body->code(s, offset - 1); // - 1
+    identifiers->exitscope();
 }
 
-void plus_class::code(ostream &s) {
+void plus_class::code(ostream& s, int offset)
+{
+    e1->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    e2->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    emit_load(ACC, 2, SP, s);
+    emit_jal("Object.copy", s);
+    emit_load(T1, 3, ACC, s);
+    emit_load(T2, 1, SP, s);
+    emit_load(T2, 3, T2, s);
+    emit_add(T1, T1, T2, s);
+    emit_store(T1, 3, ACC, s);
+    emit_addiu(SP, SP, 8, s);
 }
 
-void sub_class::code(ostream &s) {
+void sub_class::code(ostream& s, int offset)
+{
+    e1->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    e2->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    emit_load(ACC, 2, SP, s);
+    emit_jal("Object.copy", s);
+    emit_load(T1, 3, ACC, s);
+    emit_load(T2, 1, SP, s);
+    emit_load(T2, 3, T2, s);
+    emit_sub(T1, T1, T2, s);
+    emit_store(T1, 3, ACC, s);
+    emit_addiu(SP, SP, 8, s);
 }
 
-void mul_class::code(ostream &s) {
+void mul_class::code(ostream& s, int offset)
+{
+    e1->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    e2->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    emit_load(ACC, 2, SP, s);
+    emit_jal("Object.copy", s);
+    emit_load(T1, 3, ACC, s);
+    emit_load(T2, 1, SP, s);
+    emit_load(T2, 3, T2, s);
+    emit_mul(T1, T1, T2, s);
+    emit_store(T1, 3, ACC, s);
+    emit_addiu(SP, SP, 8, s);
 }
 
-void divide_class::code(ostream &s) {
+void divide_class::code(ostream& s, int offset)
+{
+    e1->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    e2->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    emit_load(ACC, 2, SP, s);
+    emit_jal("Object.copy", s);
+    emit_load(T1, 3, ACC, s);
+    emit_load(T2, 1, SP, s);
+    emit_load(T2, 3, T2, s);
+    emit_div(T1, T1, T2, s);
+    emit_store(T1, 3, ACC, s);
+    emit_addiu(SP, SP, 8, s);
 }
 
-void neg_class::code(ostream &s) {
+void neg_class::code(ostream& s, int offset)
+{
+    e1->code(s, offset);
+    emit_jal("Object.copy", s);
+    emit_load(T1, 3, ACC, s);
+    emit_neg(T1, T1, s);
+    emit_store(T1, 3, ACC, s);
 }
 
-void lt_class::code(ostream &s) {
+void lt_class::code(ostream& s, int offset)
+{
+    int less_branch = get_nextbranch();
+    int end_branch = get_nextbranch();
+
+    e1->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    e2->code(s, offset);
+    emit_move(T1, ACC, s);
+    emit_load(T1, 3, T1, s);
+    emit_load(ACC, 1, SP, s);
+    emit_load(ACC, 3, ACC, s);
+    emit_blt(ACC, T1, less_branch, s);
+    emit_load_bool(ACC, falsebool, s);
+    emit_branch(end_branch, s);
+    //output less_branch label;
+    emit_label_def(less_branch, s);
+    emit_load_bool(ACC, truebool, s);
+    //output ebd_branch label;
+    emit_label_def(end_branch, s);
+    emit_addiu(SP, SP, 4, s);
 }
 
-void eq_class::code(ostream &s) {
+void eq_class::code(ostream& s, int offset)
+{
+    int end_branch = get_nextbranch();
+
+    e1->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    e2->code(s, offset);
+
+    emit_load(T1, 1, SP, s);
+    emit_addiu(SP, SP, 4, s);
+    emit_move(T2, ACC, s);
+    emit_load_bool(ACC, truebool, s);
+    emit_beq(T1, T2, end_branch, s);
+    emit_load_bool(A1, falsebool, s);
+    emit_jal("equality_test", s);
+
+    //output end_branch label;
+    emit_label_def(end_branch, s);
 }
 
-void leq_class::code(ostream &s) {
+void leq_class::code(ostream& s, int offset)
+{
+    int leq_branch = get_nextbranch();
+    int end_branch = get_nextbranch();
+
+    e1->code(s, offset);
+    emit_store(ACC, 0, SP, s);
+    emit_addiu(SP, SP, -4, s);
+    e2->code(s, offset);
+    emit_move(T1, ACC, s);
+    emit_load(T1, 3, T1, s);
+    emit_load(ACC, 1, SP, s);
+    emit_load(ACC, 3, ACC, s);
+    emit_bleq(ACC, T1, leq_branch, s);
+    emit_load_bool(ACC, falsebool, s);
+    emit_branch(end_branch, s);
+    //output less_branch label;
+    emit_label_def(leq_branch, s);
+    emit_load_bool(ACC, truebool, s);
+    //output ebd_branch label;
+    emit_label_def(end_branch, s);
+    emit_addiu(SP, SP, 4, s);
 }
 
-void comp_class::code(ostream &s) {
+void comp_class::code(ostream& s, int offset)
+{ // not
+    int end_branch = get_nextbranch();
+    e1->code(s, offset);
+    emit_load(T1, 3, ACC, s);
+    emit_load_bool(ACC, truebool, s);
+    emit_beqz(T1, end_branch, s);
+    emit_load_bool(ACC, falsebool, s);
+    //output end_branch label;
+    emit_label_def(end_branch, s);
 }
 
-void int_const_class::code(ostream &s) {
+void int_const_class::code(ostream& s, int offset)
+{
     //
     // Need to be sure we have an IntEntry *, not an arbitrary Symbol
     //
     emit_load_int(ACC, inttable.lookup_string(token->get_string()), s);
 }
 
-void string_const_class::code(ostream &s) {
+void string_const_class::code(ostream& s, int offset)
+{
     emit_load_string(ACC, stringtable.lookup_string(token->get_string()), s);
 }
 
-void bool_const_class::code(ostream &s) {
+void bool_const_class::code(ostream& s, int offset)
+{
     emit_load_bool(ACC, BoolConst(val), s);
 }
 
-void new__class::code(ostream &s) {
+void new__class::code(ostream& s, int offset)
+{
+    if (type_name == SELF_TYPE) {
+        emit_partial_load_address(ACC, s);
+        s << CLASSOBJTAB;
+        s << endl;
+
+        // address of class_projObj = ACC + 4 * tag * 2 = ACC + (tag << 3)
+        emit_load(T1, 0, SELF, s); // class tag
+        emit_sll(T1, T1, 3, s);
+        emit_addu(T2, ACC, T1, s); // go to this address
+
+        emit_store(T2, 0, SP, s);
+        emit_addiu(SP, SP, -4, s);
+
+        emit_load(ACC, 0, T2, s); // load address
+
+        emit_jal("Object.copy", s);
+
+        emit_load(T2, 1, SP, s);
+        emit_addiu(SP, SP, 4, s);
+
+        emit_store(ACC, 0, SP, s);
+        emit_addiu(SP, SP, -4, s);
+
+        // use T1, now ACC contains the address to the object just copied
+        emit_load(T1, 1, T2, s); // load init address
+
+        emit_jalr(T1, s);
+    }
+    else {
+        emit_partial_load_address(ACC, s);
+        emit_protobj_ref(type_name, s);
+        s << endl;
+
+        emit_jal("Object.copy", s);
+        emit_store(ACC, 0, SP, s);
+        emit_addiu(SP, SP, -4, s);
+
+        s << JAL;
+        emit_init_ref(type_name, s);
+        s << endl;
+    }
+    emit_load(ACC, 1, SP, s);
+    emit_addiu(SP, SP, 4, s);
 }
 
-void isvoid_class::code(ostream &s) {
+void isvoid_class::code(ostream& s, int offset)
+{
+    int settrue_branch = get_nextbranch();
+    int end_branch = get_nextbranch();
+    e1->code(s, offset);
+    emit_beqz(ACC, settrue_branch, s); // ACC is zero, which means void, goto set ACC=true branch
+    // now it is not void, set ACC = false;
+    emit_load_bool(ACC, falsebool, s);
+    emit_branch(end_branch, s);
+    //output settrue_branch label;
+    emit_label_def(settrue_branch, s);
+    emit_load_bool(ACC, truebool, s);
+    //output end_branch label;
+    emit_label_def(end_branch, s);
 }
 
-void no_expr_class::code(ostream &s) {
+void no_expr_class::code(ostream& s, int offset)
+{
 }
 
-void object_class::code(ostream &s) {
+void object_class::code(ostream& s, int offset)
+{
+    if (name == self) {
+        /*do nothing for a method? try to set ACC to SELF*/
+        emit_move(ACC, SELF, s);
+        return;
+    }
+    /* using a symboltable, load it (the address) to acc*/
+    int* ptr = identifiers->lookup(name->get_string());
+    int of = 0;
+    if (ptr == NULL) // attrs
+    {
+        of = class_attr_typeoffset[selfclass][name].second;
+        emit_load(ACC, of, SELF, s);
+    }
+    else {
+        of = *ptr;
+        emit_load(ACC, of, FP, s);
+    }
 }
-
-
