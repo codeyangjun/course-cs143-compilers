@@ -23,6 +23,9 @@
 
 #include "cgen.h"
 #include "cgen_gc.h"
+#include <vector>
+#include <algorithm>
+#include <list>
 
 extern void emit_string_constant(ostream &str, char *s);
 
@@ -818,7 +821,7 @@ void CgenClassTable::code_name_tab() {
     str << CLASSNAMETAB << LABEL;
 
     std::vector<std::pair<int, Symbol> > tags;
-    for (std::map<Symbol, int>::iterator it = classtag.begin(); it != classtag.end(); it++) {
+    for (std::map<Symbol, int>::iterator it = classTag.begin(); it != classTag.end(); it++) {
         tags.push_back(std::make_pair(it->second, it->first));
     }
     std::sort(tags.begin(), tags.end());
@@ -834,7 +837,7 @@ void CgenClassTable::code_obj_tab() {
     str << CLASSOBJTAB << LABEL;
 
     std::vector<std::pair<int, Symbol> > tags;
-    for (std::map<Symbol, int>::iterator it = classtag.begin(); it != classtag.end(); it++) {
+    for (std::map<Symbol, int>::iterator it = classTag.begin(); it != classTag.end(); it++) {
         tags.push_back(std::make_pair(it->second, it->first));
     }
     std::sort(tags.begin(), tags.end());
@@ -848,7 +851,7 @@ void CgenClassTable::code_obj_tab() {
     }
 }
 
-static void code_dispatch_helper(CgenNode* node, std::list<std::pair<Symbol, Symbol> >& functions) {
+void CgenClassTable::code_dispatch_helper(CgenNode* node, std::list<std::pair<Symbol, Symbol> >& functions) {
     if (node == NULL) {
         return;
     }
@@ -893,7 +896,7 @@ void CgenClassTable::code_dispatch() {
     }
 }
 
-static void code_prototype_helper(CgenNode* node, int& attr_offset) {
+void CgenClassTable::code_prototype_helper(CgenNode* node, int& attr_offset) {
     if (node == NULL) {
         return;
     }
@@ -903,7 +906,7 @@ static void code_prototype_helper(CgenNode* node, int& attr_offset) {
     for (int i = features->first(); features->more(i); i = features->next(i)) {
         Feature feature = features->nth(i);
         if (feature->get_type() == 1) {
-            attr_class* attr = (attr_class*)f;
+            attr_class* attr = (attr_class*)feature;
             Symbol type = attr->type_decl;
             classAttrTypeoffset[selfClass][attr->get_name()] = std::make_pair(attr->type_decl, attr_offset++);
 

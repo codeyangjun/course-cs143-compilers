@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <map>
+#include <list>
 #include "emit.h"
 #include "cool-tree.h"
 #include "symtab.h"
@@ -52,8 +53,10 @@ private:
 
     void code_obj_tab();
 
+    void code_dispatch_helper(CgenNode* node, std::list<std::pair<Symbol, Symbol> >& functions);
     void code_dispatch();
 
+    void code_prototype_helper(CgenNode* node, int& attr_offset);
     void code_prototype();
 
 // The following creates an inheritance graph from
