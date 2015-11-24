@@ -1,4 +1,3 @@
-f
 //**************************************************************
 //
 // Code generator SKELETON
@@ -598,9 +597,6 @@ void CgenClassTable::code_constants() {
     code_bools(boolclasstag);
 }
 
-void CgenClassTable::code
-
-
 CgenClassTable::CgenClassTable(Classes classes, ostream &s) : nds(NULL), str(s) {
     // TODO: change
     stringclasstag = 0 /* Change to your String class tag here */;
@@ -791,7 +787,7 @@ void CgenNode::set_parentnd(CgenNodeP p) {
     parentnd = p;
 }
 
-int code_label_class(CgenNode* node, int& label) {
+int CgenClassTable::code_label_class(CgenNode* node, int& label) {
     Symbol s = node->get_name();
     classTag[s] = label;
     int maxChild = label++;
@@ -811,7 +807,7 @@ static int get_object_size(CgenNode* node) {
     Features features = node->features;
     for (int i = features->first(); features->more(i); i = features->next(i)) {
         Feature feature = features->nth(i);
-        if (f->type() == 1) {
+        if (feature->get_type() == 1) {
             ++size;
         }
     }
@@ -840,7 +836,7 @@ void CgenClassTable::code() {
         if (objectSize.find(s) != objectSize.end()) {
             continue;
         }
-        objectSize[s] =
+        objectSize[s] = get_object_size(node);
     }
 
     if (cgen_debug) cout << "coding global data" << endl;
