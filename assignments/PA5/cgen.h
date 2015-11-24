@@ -54,6 +54,7 @@ private:
     void code_prototype_helper(CgenNode* node, int& attr_offset);
     void code_prototype();
 
+    void default_init(CgenNode* node);
     void code_methods();
 
 // The following creates an inheritance graph from

@@ -960,7 +960,7 @@ void CgenClassTable::code_prototype() {
     }
 }
 
-static void default_init(CgenNode* node) {
+void CgenClassTable::default_init(CgenNode* node) {
     if (node == NULL) {
         return;
     }
