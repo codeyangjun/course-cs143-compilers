@@ -51,6 +51,7 @@ private:
 
     void code_dispatch();
 
+    void code_prototype_helper(CgenNode* node, int& attr_offset);
     void code_prototype();
 
     void code_methods();

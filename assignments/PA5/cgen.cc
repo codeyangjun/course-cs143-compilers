@@ -903,7 +903,7 @@ void CgenClassTable::code_dispatch() {
     }
 }
 
-static void code_prototype_helper(CgenNode* node, int& attr_offset) {
+void CgenClassTable::code_prototype_helper(CgenNode* node, int& attr_offset) {
     if (node == NULL) {
         return;
     }
