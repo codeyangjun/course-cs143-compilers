@@ -31,6 +31,13 @@ extern void emit_string_constant(ostream &str, char *s);
 
 extern int cgen_debug;
 
+std::map<Symbol, int> classTag, classMaxChild, objectSize;
+Symbol selfClass = 0;
+Symbol curFilename;
+std::map<Symbol, std::map<Symbol, int> > classMethodOffset;
+std::map<Symbol, std::map<Symbol, std::pair<Symbol, int> > > classAttrTypeoffset;
+SymbolTable<char*, int>* identifiers;
+
 //
 // Three symbols from the semantic analyzer (semant.cc) are used.
 // If e : No_type, then no code is generated for e.
@@ -851,7 +858,7 @@ void CgenClassTable::code_obj_tab() {
     }
 }
 
-void CgenClassTable::code_dispatch_helper(CgenNode* node, std::list<std::pair<Symbol, Symbol> >& functions) {
+static void code_dispatch_helper(CgenNode* node, std::list<std::pair<Symbol, Symbol> >& functions) {
     if (node == NULL) {
         return;
     }
@@ -896,7 +903,7 @@ void CgenClassTable::code_dispatch() {
     }
 }
 
-void CgenClassTable::code_prototype_helper(CgenNode* node, int& attr_offset) {
+static void code_prototype_helper(CgenNode* node, int& attr_offset) {
     if (node == NULL) {
         return;
     }
@@ -953,6 +960,142 @@ void CgenClassTable::code_prototype() {
     }
 }
 
+static void default_init(CgenNode* node) {
+    if (node == NULL) {
+        return;
+    }
+    default_init(node->get_parentnd());
+
+    Features features = node->features;
+
+    for (int i = features->first(); features->more(i); i = features->next(i)) {
+        Feature feature = features->nth(i);
+        if (feature->get_type() == 1) {
+            attr_class* attr = (attr_class*)feature;
+            if (attr->init->no_expr()) {
+                continue;
+            }
+            if (attr->type_decl == Int) {
+                IntEntryP lensym = inttable.add_int(0);
+                emit_partial_load_address(ACC, str);
+                lensym->code_ref(str);
+                str << endl;
+            } else if (attr->type_decl == Bool) {
+                emit_partial_load_address(ACC, str);
+                falsebool.code_ref(str);
+                str << endl;
+            } else if (attr->type_decl == Str) {
+                emit_partial_load_address(ACC, str);
+                stringtable.lookup_string("")->code_ref(str);
+                str << endl;
+            } else {
+                emit_move(ACC, ZERO, str);
+            }
+            int offset = classAttrTypeoffset[selfClass][feature->get_name()].second;
+            emit_store(ACC, offset, SELF, str);
+        }
+    }
+}
+
+void CgenClassTable::code_methods() {
+    for (List<CgenNode>* l = nds; l; l = l->tl()) {
+        CgenNode* node = l->hd();
+        Symbol s = node->get_name();
+        selfClass = s;
+        curFilename = node->filename;
+        Features features = node->features;
+
+        emit_init_ref(s, str);
+        str << LABEL;
+
+        emit_addiu(SP, SP, -12, str);
+        emit_store(FP, 3, SP, str);
+        emit_store(SELF, 2, SP, str);
+        emit_store(RA, 1, SP, str);
+        emit_move(FP, SP, str);
+        emit_move(SELF, ACC, str);
+
+        default_init(node);
+
+        emit_move(ACC, SELF, str);
+
+        if (node->get_parent() != No_class) {
+            str << JAL << node->get_parent() << "_init" << endl;
+        }
+
+        identifiers = new SymbolTable<char*, int>();
+        identifiers->enterscope();
+
+        for (int i = features->first(); features->more(i); i = features->next(i)) {
+            Feature feature = features->nth(i);
+            if (feature->get_type() == 1) {
+                attr_class* attr = (attr_class*)feature;
+                if (attr->init->no_expr()) {
+                    continue;
+                }
+                int variable_length = WORD_SIZE * attr->init->get_local_temp_variable_num();
+                if (variable_length) {
+                    emit_addiu(SP, SP, -variable_length, str);
+                    attr->init->code(str, 0);
+                    emit_addiu(SP, SP, variable_length, str);
+                } else {
+                    attr->init->code(str, 0);
+                }
+                int offset = classAttrTypeoffset[s][feature->get_name()].second;
+                emit_store(ACC, offset, SELF, str);
+            }
+        }
+
+        identifiers->exitscope();
+        delete identifiers;
+
+        emit_move(ACC, SELF, str);
+        emit_load(RA, 1, SP, str);
+        emit_load(SELF, 2, SP, str);
+        emit_load(FP, 3, SP, str);
+        emit_addiu(SP, SP, 12, str);
+        emit_return(str);
+
+        if (s == Object || s == IO || s == Str)
+            continue;
+
+        for (int i = features->first(); features->more(i); i = features->next(i)) {
+            Feature feature = features->nth(i);
+            if (feature->get_type() == 0) {
+                identifiers = new SymbolTable<char*, int>();
+                identifiers->enterscope();
+                emit_method_ref(s, feature->get_name(), str);
+                str << LABEL;
+                method_class* med = (method_class*)feature;
+                for (int k = med->formals->first(), of = med->formals->len(); med->formals->more(k); k = med->formals->next(k), of--) {
+                    formal_class* f = (formal_class*)med->formals->nth(k);
+                    identifiers->addid(f->name->get_string(), new int(of));
+                }
+                emit_move(FP, SP, str);
+                emit_move(SELF, ACC, str);
+                int variable_length = WORD_SIZE * med->expr->get_local_temp_variable_num();
+                if (variable_length)
+                {
+                    emit_addiu(SP, SP, -variable_length, str);
+                }
+                emit_store(RA, 0, SP, str);
+
+                emit_addiu(SP, SP, -4, str);
+
+                med->expr->code(str, 0);
+                emit_load(RA, 1, SP, str);
+                int z = 4 + med->formals->len() * 4 + variable_length;
+                emit_addiu(SP, SP, z, str);
+                emit_load(SELF, 1, SP, str);
+                emit_load(FP, 2, SP, str);
+                emit_return(str);
+
+                identifiers->exitscope();
+                delete identifiers;
+            }
+        }
+    }
+}
 
 void CgenClassTable::code() {
     // initialize the class tag
@@ -1006,7 +1149,7 @@ void CgenClassTable::code() {
 //                   - object initializer
 //                   - the class methods
 //                   - etc...
-
+    code_methods();
 }
 
 
